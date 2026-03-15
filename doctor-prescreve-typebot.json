@@ -1,0 +1,348 @@
+{
+  "id": "doctor-prescreve-bot",
+  "name": "Doctor Prescreve - Prescription Renewal",
+  "description": "Chatbot for medical prescription renewal via telemedicine",
+  "version": 2,
+  "variables": [
+    { "name": "patient_name", "type": "text", "value": "" },
+    { "name": "patient_birth_date", "type": "text", "value": "" },
+    { "name": "patient_gender", "type": "text", "value": "" },
+    { "name": "patient_phone", "type": "text", "value": "" },
+    { "name": "patient_email", "type": "text", "value": "" },
+    { "name": "medical_condition", "type": "text", "value": "" },
+    { "name": "medication_name", "type": "text", "value": "" },
+    { "name": "medication_dosage", "type": "text", "value": "" },
+    { "name": "medication_frequency", "type": "text", "value": "" },
+    { "name": "time_using_medication", "type": "text", "value": "" },
+    { "name": "red_flags_detected", "type": "boolean", "value": false },
+    { "name": "eligibility_confirmed", "type": "boolean", "value": false },
+    { "name": "consent_lgpd_accepted", "type": "boolean", "value": false },
+    { "name": "prescription_image", "type": "text", "value": "" },
+    { "name": "payment_status", "type": "text", "value": "pending" },
+    { "name": "payment_id", "type": "text", "value": "PGTO-{{timestamp}}" },
+    { "name": "medical_review_status", "type": "text", "value": "pending" },
+    { "name": "prescription_id", "type": "text", "value": "RX-{{timestamp}}" },
+    { "name": "prescription_pdf_url", "type": "text", "value": "https://seu-dominio.com/prescricao/{{prescription_id}}.pdf" },
+    { "name": "rejection_reason", "type": "text", "value": "Dados clínicos insuficientes para renovação remota." }
+  ],
+  "blocks": [
+    {
+      "id": "start-block",
+      "type": "start",
+      "items": [
+        {
+          "type": "text",
+          "content": {
+            "text": "👋 Bem-vindo à **DOCTOR PRESCREVE**!\n\nSou seu assistente virtual para renovação de receitas de doenças crônicas.\n\n📋 **Como funciona:**\n1. Responda algumas perguntas\n2. Envie foto da receita anterior\n3. Realize o pagamento (R$ 69,90)\n4. Médico revisa sua solicitação\n5. Você recebe a receita digital\n\nDigite **INICIAR** para começar."
+          }
+        }
+      ]
+    },
+    {
+      "id": "lgpd-consent",
+      "type": "choice",
+      "items": [
+        {
+          "type": "text",
+          "content": {
+            "text": "🔒 **CONSENTIMENTO LGPD**\n\nPara continuar, aceite o termo de consentimento para processamento de dados sensíveis de saúde."
+          }
+        },
+        {
+          "type": "button",
+          "content": { "text": "✅ Aceito" },
+          "variable": "consent_lgpd_accepted",
+          "value": true
+        },
+        {
+          "type": "button",
+          "content": { "text": "❌ Não aceito" },
+          "variable": "consent_lgpd_accepted",
+          "value": false
+        }
+      ]
+    },
+    {
+      "id": "collect-name",
+      "type": "input",
+      "items": [
+        { "type": "text", "content": { "text": "Qual é seu **nome completo**?" } },
+        { "type": "short-text", "variable": "patient_name" }
+      ]
+    },
+    {
+      "id": "collect-birth-date",
+      "type": "input",
+      "items": [
+        { "type": "text", "content": { "text": "Qual sua **data de nascimento**? (DD/MM/AAAA)" } },
+        { "type": "short-text", "variable": "patient_birth_date" }
+      ]
+    },
+    {
+      "id": "collect-gender",
+      "type": "choice",
+      "items": [
+        { "type": "text", "content": { "text": "Qual é seu **gênero**?" } },
+        { "type": "button", "content": { "text": "Feminino" }, "variable": "patient_gender", "value": "Feminino" },
+        { "type": "button", "content": { "text": "Masculino" }, "variable": "patient_gender", "value": "Masculino" },
+        { "type": "button", "content": { "text": "Outro" }, "variable": "patient_gender", "value": "Outro" }
+      ]
+    },
+    {
+      "id": "eligibility-confirmation",
+      "type": "choice",
+      "items": [
+        {
+          "type": "text",
+          "content": {
+            "text": "✅ **CRITÉRIOS DE ELEGIBILIDADE**\n\nVocê confirma que:\n1) Tem condição crônica estável\n2) Possui receita anterior válida (12 meses)\n3) Faz uso contínuo da medicação\n4) Teve consulta presencial nos últimos 180 dias"
+          }
+        },
+        {
+          "type": "button",
+          "content": { "text": "✅ Sim, confirmo" },
+          "variable": "eligibility_confirmed",
+          "value": true
+        },
+        {
+          "type": "button",
+          "content": { "text": "❌ Não confirmo" },
+          "variable": "eligibility_confirmed",
+          "value": false
+        }
+      ]
+    },
+    {
+      "id": "select-condition",
+      "type": "choice",
+      "items": [
+        { "type": "text", "content": { "text": "Qual sua **condição crônica** principal?" } },
+        { "type": "button", "content": { "text": "Hipertensão" }, "variable": "medical_condition", "value": "Hipertensão" },
+        { "type": "button", "content": { "text": "Diabetes Tipo 2" }, "variable": "medical_condition", "value": "Diabetes Tipo 2" },
+        { "type": "button", "content": { "text": "Hipotireoidismo" }, "variable": "medical_condition", "value": "Hipotireoidismo" },
+        { "type": "button", "content": { "text": "Dislipidemia" }, "variable": "medical_condition", "value": "Dislipidemia" }
+      ]
+    },
+    {
+      "id": "red-flags-screening",
+      "type": "choice",
+      "items": [
+        {
+          "type": "text",
+          "content": {
+            "text": "🚨 **TRIAGEM DE ALERTAS**\n\nNas últimas 48h você teve dor torácica intensa, falta de ar intensa, desmaio, ou PA > 180/120?"
+          }
+        },
+        { "type": "button", "content": { "text": "Sim" }, "variable": "red_flags_detected", "value": true },
+        { "type": "button", "content": { "text": "Não" }, "variable": "red_flags_detected", "value": false }
+      ]
+    },
+    {
+      "id": "red-flag-blocked",
+      "type": "text",
+      "items": [
+        {
+          "type": "text",
+          "content": {
+            "text": "🚫 **ATENDIMENTO BLOQUEADO POR SEGURANÇA**\n\nIdentificamos sinais de alerta. Procure atendimento de urgência imediatamente (UPA/PS ou SAMU 192)."
+          }
+        }
+      ]
+    },
+    {
+      "id": "collect-medication",
+      "type": "input",
+      "items": [
+        { "type": "text", "content": { "text": "Qual o **nome do medicamento**?" } },
+        { "type": "short-text", "variable": "medication_name" }
+      ]
+    },
+    {
+      "id": "collect-dosage",
+      "type": "input",
+      "items": [
+        { "type": "text", "content": { "text": "Qual a **dosagem**? (Ex.: 50mg)" } },
+        { "type": "short-text", "variable": "medication_dosage" }
+      ]
+    },
+    {
+      "id": "collect-frequency",
+      "type": "input",
+      "items": [
+        { "type": "text", "content": { "text": "Qual a **frequência de uso**? (Ex.: 1x ao dia)" } },
+        { "type": "short-text", "variable": "medication_frequency" }
+      ]
+    },
+    {
+      "id": "collect-time-using",
+      "type": "choice",
+      "items": [
+        { "type": "text", "content": { "text": "Há quanto tempo usa essa medicação?" } },
+        { "type": "button", "content": { "text": "Menos de 6 meses" }, "variable": "time_using_medication", "value": "Menos de 6 meses" },
+        { "type": "button", "content": { "text": "6 meses a 1 ano" }, "variable": "time_using_medication", "value": "6 meses a 1 ano" },
+        { "type": "button", "content": { "text": "Mais de 1 ano" }, "variable": "time_using_medication", "value": "Mais de 1 ano" }
+      ]
+    },
+    {
+      "id": "upload-prescription",
+      "type": "input",
+      "items": [
+        {
+          "type": "text",
+          "content": {
+            "text": "📸 Envie uma **foto nítida** da receita anterior (emitida nos últimos 12 meses, com CRM, data e assinatura)."
+          }
+        },
+        { "type": "file", "variable": "prescription_image" }
+      ]
+    },
+    {
+      "id": "collect-contact",
+      "type": "input",
+      "items": [
+        { "type": "text", "content": { "text": "Qual seu **WhatsApp** com DDD?" } },
+        { "type": "short-text", "variable": "patient_phone" }
+      ]
+    },
+    {
+      "id": "collect-email",
+      "type": "input",
+      "items": [
+        { "type": "text", "content": { "text": "Qual seu **e-mail**?" } },
+        { "type": "short-text", "variable": "patient_email" }
+      ]
+    },
+    {
+      "id": "payment-summary",
+      "type": "text",
+      "items": [
+        {
+          "type": "text",
+          "content": {
+            "text": "📋 **Resumo do pedido**\n\n👤 Paciente: {{patient_name}}\n🏥 Condição: {{medical_condition}}\n💊 Medicação: {{medication_name}} {{medication_dosage}} ({{medication_frequency}})\n\n💰 Valor: **R$ 69,90**"
+          }
+        }
+      ]
+    },
+    {
+      "id": "payment-block",
+      "type": "text",
+      "items": [
+        {
+          "type": "text",
+          "content": {
+            "text": "💳 **Pagamento**\n\nAdicione aqui seu bloco de pagamento (PIX/cartão).\nApós confirmação, atualize `payment_status` para `paid`."
+          }
+        }
+      ]
+    },
+    {
+      "id": "payment-confirmation",
+      "type": "text",
+      "items": [
+        {
+          "type": "text",
+          "content": {
+            "text": "✅ Pagamento confirmado!\n\nProtocolo: {{payment_id}}\nSeu pedido foi encaminhado para avaliação médica (até 24h úteis)."
+          }
+        }
+      ]
+    },
+    {
+      "id": "medical-review",
+      "type": "text",
+      "items": [
+        {
+          "type": "text",
+          "content": {
+            "text": "👨‍⚕️ **Em avaliação médica**\n\nVocê receberá atualização assim que houver decisão."
+          }
+        }
+      ]
+    },
+    {
+      "id": "prescription-approved",
+      "type": "text",
+      "items": [
+        {
+          "type": "text",
+          "content": {
+            "text": "✅ **Pedido aprovado**\n\nSua receita digital: {{prescription_pdf_url}}\nNúmero: {{prescription_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "prescription-rejected",
+      "type": "text",
+      "items": [
+        {
+          "type": "text",
+          "content": {
+            "text": "❌ **Pedido não aprovado**\n\nMotivo: {{rejection_reason}}\nProcure avaliação presencial."
+          }
+        }
+      ]
+    },
+    {
+      "id": "final-orientations",
+      "type": "text",
+      "items": [
+        {
+          "type": "text",
+          "content": {
+            "text": "📌 **Orientações finais**\n- Guarde o PDF\n- Apresente com documento\n- Em caso de novos sintomas, procure atendimento presencial."
+          }
+        }
+      ]
+    },
+    {
+      "id": "end-block",
+      "type": "end",
+      "items": [
+        { "type": "text", "content": { "text": "Conversa encerrada. Obrigado!" } }
+      ]
+    }
+  ],
+  "connections": [
+    { "from": "start-block", "to": "lgpd-consent" },
+    { "from": "lgpd-consent", "to": "collect-name", "condition": "consent_lgpd_accepted == true" },
+    { "from": "lgpd-consent", "to": "end-block", "condition": "consent_lgpd_accepted == false" },
+    { "from": "collect-name", "to": "collect-birth-date" },
+    { "from": "collect-birth-date", "to": "collect-gender" },
+    { "from": "collect-gender", "to": "eligibility-confirmation" },
+    { "from": "eligibility-confirmation", "to": "select-condition", "condition": "eligibility_confirmed == true" },
+    { "from": "eligibility-confirmation", "to": "end-block", "condition": "eligibility_confirmed == false" },
+    { "from": "select-condition", "to": "red-flags-screening" },
+    { "from": "red-flags-screening", "to": "red-flag-blocked", "condition": "red_flags_detected == true" },
+    { "from": "red-flags-screening", "to": "collect-medication", "condition": "red_flags_detected == false" },
+    { "from": "red-flag-blocked", "to": "end-block" },
+    { "from": "collect-medication", "to": "collect-dosage" },
+    { "from": "collect-dosage", "to": "collect-frequency" },
+    { "from": "collect-frequency", "to": "collect-time-using" },
+    { "from": "collect-time-using", "to": "upload-prescription" },
+    { "from": "upload-prescription", "to": "collect-contact" },
+    { "from": "collect-contact", "to": "collect-email" },
+    { "from": "collect-email", "to": "payment-summary" },
+    { "from": "payment-summary", "to": "payment-block" },
+    { "from": "payment-block", "to": "payment-confirmation", "condition": "payment_status == 'paid'" },
+    { "from": "payment-confirmation", "to": "medical-review" },
+    { "from": "medical-review", "to": "prescription-approved", "condition": "medical_review_status == 'approved'" },
+    { "from": "medical-review", "to": "prescription-rejected", "condition": "medical_review_status == 'rejected'" },
+    { "from": "prescription-approved", "to": "final-orientations" },
+    { "from": "prescription-rejected", "to": "final-orientations" },
+    { "from": "final-orientations", "to": "end-block" }
+  ],
+  "settings": {
+    "timezone": "America/Sao_Paulo",
+    "language": "pt-BR"
+  },
+  "metadata": {
+    "company": "MAX MATOS MEDICINA E ESTETICA LTDA",
+    "trade_name": "DOCTOR PRESCREVE",
+    "responsible": "Dr. Max Vinicius",
+    "crm": "163032",
+    "email": "dr.max.vinicius.cg@outlook.com",
+    "phone": "(11) 8564-2069"
+  }
+}
